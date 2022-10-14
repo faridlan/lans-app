@@ -11,14 +11,17 @@ import (
 )
 
 type RekapRepositoryImpl struct {
+	// DB *mongo.Collection
 }
 
 func NewRekapRepository() RekapRepository {
-	return &RekapRepositoryImpl{}
+	return &RekapRepositoryImpl{
+		// DB: &mongo.Collection{},
+	}
 }
 
-func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, db *mongo.Database, rekap domain.Rekap) (*domain.Rekap, error) {
-	result, err := db.Collection("rekap").InsertOne(ctx, rekap)
+func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) (*domain.Rekap, error) {
+	result, err := DB.InsertOne(ctx, rekap)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -29,19 +32,19 @@ func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, db *mongo.
 	return &rekap, nil
 }
 
-func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, db *mongo.Database, rekap domain.Rekap) (domain.Rekap, error) {
+func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) (*domain.Rekap, error) {
 	filter := bson.M{"_Id": rekap.Id}
 	field := bson.M{"$set": rekap}
-	_, err := db.Collection("rekap").UpdateOne(ctx, filter, field)
+	_, err := DB.UpdateOne(ctx, filter, field)
 	if err != nil {
-		return rekap, errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	return rekap, nil
+	return &rekap, nil
 }
 
-func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, db *mongo.Database, rekap domain.Rekap) error {
-	_, err := db.Collection("rekap").DeleteOne(ctx, bson.M{"_id": rekap.Id})
+func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) error {
+	_, err := DB.DeleteOne(ctx, bson.M{"_id": rekap.Id})
 	if err != nil {
 		return errors.New(err.Error())
 	}
@@ -49,38 +52,37 @@ func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, db *mongo.
 	return nil
 }
 
-func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, db *mongo.Database, rekapId string) (domain.Rekap, error) {
-	cursor, err := db.Collection("rekap").Find(ctx, bson.M{"_id": rekapId})
+func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, DB *mongo.Collection, rekapId primitive.ObjectID) (*domain.Rekap, error) {
+	cursor, err := DB.Find(ctx, bson.M{"_id": rekapId})
 	if err != nil {
-		return domain.Rekap{}, errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	rekap := domain.Rekap{}
 	if cursor.Next(ctx) {
 		err := cursor.Decode(&rekap)
 		if err != nil {
-			return rekap, errors.New(err.Error())
+			return nil, errors.New(err.Error())
 		}
 
-		return rekap, nil
+		return &rekap, nil
 	} else {
-		return rekap, errors.New("rekap not found")
+		return nil, errors.New("rekap not found")
 	}
-
 }
 
-func (repository *RekapRepositoryImpl) FindMany(ctx context.Context, db *mongo.Database) ([]domain.Rekap, error) {
-	cursor, err := db.Collection("rekap").Find(ctx, bson.M{})
+func (repository *RekapRepositoryImpl) FindMany(ctx context.Context, DB *mongo.Collection) ([]*domain.Rekap, error) {
+	cursor, err := DB.Find(ctx, bson.M{})
 	if err != nil {
-		return []domain.Rekap{}, errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
-	rekaps := []domain.Rekap{}
+	rekaps := []*domain.Rekap{}
 	for cursor.Next(ctx) {
-		rekap := domain.Rekap{}
+		rekap := &domain.Rekap{}
 		err := cursor.Decode(&rekap)
 		if err != nil {
-			return rekaps, errors.New(err.Error())
+			return nil, errors.New(err.Error())
 		}
 
 		rekaps = append(rekaps, rekap)
