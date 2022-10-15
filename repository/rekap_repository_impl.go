@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/faridlan/lans-app/model/domain"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,82 +10,92 @@ import (
 )
 
 type RekapRepositoryImpl struct {
-	// DB *mongo.Collection
+	DB *mongo.Collection
 }
 
-func NewRekapRepository() RekapRepository {
+func NewRekapRepository(DB *mongo.Collection) RekapRepository {
 	return &RekapRepositoryImpl{
-		// DB: &mongo.Collection{},
+		DB: DB,
 	}
 }
 
-func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) (*domain.Rekap, error) {
-	result, err := DB.InsertOne(ctx, rekap)
+func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, rekap domain.Rekap) (*domain.Rekap, error) {
+	result, err := repository.DB.InsertOne(ctx, rekap)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
 
-	id := result.InsertedID
-	rekap.Id = id.(primitive.ObjectID)
+	rekap.Id = result.InsertedID.(primitive.ObjectID)
 
 	return &rekap, nil
 }
 
-func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) (*domain.Rekap, error) {
-	filter := bson.M{"_Id": rekap.Id}
-	field := bson.M{"$set": rekap}
-	_, err := DB.UpdateOne(ctx, filter, field)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
+// func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, rekap domain.Rekap) (*domain.Rekap, error) {
+// 	filter := bson.M{"_Id": rekap.Id}
+// 	field := bson.M{"$set": rekap}
+// 	_, err := repository.DB.UpdateOne(ctx, filter, field)
+// 	if err != nil {
+// 		return nil, errors.New(err.Error())
+// 	}
 
-	return &rekap, nil
-}
+// 	return &rekap, nil
+// }
 
-func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, DB *mongo.Collection, rekap domain.Rekap) error {
-	_, err := DB.DeleteOne(ctx, bson.M{"_id": rekap.Id})
-	if err != nil {
-		return errors.New(err.Error())
-	}
+// func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, rekap domain.Rekap) error {
+// 	_, err := repository.DB.DeleteOne(ctx, bson.M{"_id": rekap.Id})
+// 	if err != nil {
+// 		return errors.New(err.Error())
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, DB *mongo.Collection, rekapId primitive.ObjectID) (*domain.Rekap, error) {
-	cursor, err := DB.Find(ctx, bson.M{"_id": rekapId})
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
+func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, rekapId primitive.ObjectID) (*domain.Rekap, error) {
+
+	filter := bson.D{{Key: "_id", Value: rekapId}}
+	result := repository.DB.FindOne(ctx, filter)
 
 	rekap := domain.Rekap{}
-	if cursor.Next(ctx) {
-		err := cursor.Decode(&rekap)
-		if err != nil {
-			return nil, errors.New(err.Error())
-		}
 
-		return &rekap, nil
-	} else {
-		return nil, errors.New("rekap not found")
-	}
-}
-
-func (repository *RekapRepositoryImpl) FindMany(ctx context.Context, DB *mongo.Collection) ([]*domain.Rekap, error) {
-	cursor, err := DB.Find(ctx, bson.M{})
+	err := result.Decode(&rekap)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
+	return &rekap, nil
 
-	rekaps := []*domain.Rekap{}
-	for cursor.Next(ctx) {
-		rekap := &domain.Rekap{}
-		err := cursor.Decode(&rekap)
-		if err != nil {
-			return nil, errors.New(err.Error())
-		}
+	// cursor, err := repository.DB.Find(ctx, bson.M{"_id": rekapId})
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// rekap := domain.Rekap{}
+	// if cursor.Next(ctx) {
+	// 	err := cursor.Decode(&rekap)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		rekaps = append(rekaps, rekap)
-
-	}
-	return rekaps, nil
+	// 	return &rekap, nil
+	// } else {
+	// 	return nil, errors.New("rekap not found")
+	// }
 }
+
+// func (repository *RekapRepositoryImpl) FindMany(ctx context.Context) ([]*domain.Rekap, error) {
+// 	cursor, err := repository.DB.Find(ctx, bson.M{})
+// 	if err != nil {
+// 		return nil, errors.New(err.Error())
+// 	}
+
+// 	rekaps := []*domain.Rekap{}
+// 	for cursor.Next(ctx) {
+// 		rekap := &domain.Rekap{}
+// 		err := cursor.Decode(&rekap)
+// 		if err != nil {
+// 			return nil, errors.New(err.Error())
+// 		}
+
+// 		rekaps = append(rekaps, rekap)
+
+// 	}
+// 	return rekaps, nil
+// }
