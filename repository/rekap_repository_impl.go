@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/faridlan/lans-app/model/domain"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RekapRepositoryImpl struct {
@@ -30,25 +32,30 @@ func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, rekap doma
 	return &rekap, nil
 }
 
-// func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, rekap domain.Rekap) (*domain.Rekap, error) {
-// 	filter := bson.M{"_Id": rekap.Id}
-// 	field := bson.M{"$set": rekap}
-// 	_, err := repository.DB.UpdateOne(ctx, filter, field)
-// 	if err != nil {
-// 		return nil, errors.New(err.Error())
-// 	}
+func (repository *RekapRepositoryImpl) UpdateOne(ctx context.Context, rekap domain.Rekap) (*domain.Rekap, error) {
+	filter := bson.M{"_Id": rekap.Id}
+	field := bson.M{"$set": rekap}
+	result := repository.DB.FindOneAndUpdate(ctx, filter, field, options.FindOneAndUpdate().SetReturnDocument(1))
+	err := result.Decode(&rekap)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return &rekap, nil
-// }
+	return &rekap, nil
+}
 
-// func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, rekap domain.Rekap) error {
-// 	_, err := repository.DB.DeleteOne(ctx, bson.M{"_id": rekap.Id})
-// 	if err != nil {
-// 		return errors.New(err.Error())
-// 	}
+func (repository *RekapRepositoryImpl) DeleteOne(ctx context.Context, rekap domain.Rekap) error {
+	result, err := repository.DB.DeleteOne(ctx, bson.M{"_id": rekap.Id})
+	if err != nil {
+		return errors.New(err.Error())
+	}
 
-// 	return nil
-// }
+	if result.DeletedCount == 0 {
+		return errors.New("no document deleted")
+	}
+
+	return nil
+}
 
 func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, rekapId primitive.ObjectID) (*domain.Rekap, error) {
 
@@ -80,22 +87,22 @@ func (repository *RekapRepositoryImpl) FindOne(ctx context.Context, rekapId prim
 	// }
 }
 
-// func (repository *RekapRepositoryImpl) FindMany(ctx context.Context) ([]*domain.Rekap, error) {
-// 	cursor, err := repository.DB.Find(ctx, bson.M{})
-// 	if err != nil {
-// 		return nil, errors.New(err.Error())
-// 	}
+func (repository *RekapRepositoryImpl) FindMany(ctx context.Context) ([]domain.Rekap, error) {
+	cursor, err := repository.DB.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
 
-// 	rekaps := []*domain.Rekap{}
-// 	for cursor.Next(ctx) {
-// 		rekap := &domain.Rekap{}
-// 		err := cursor.Decode(&rekap)
-// 		if err != nil {
-// 			return nil, errors.New(err.Error())
-// 		}
+	rekaps := []domain.Rekap{}
+	for cursor.Next(ctx) {
+		rekap := domain.Rekap{}
+		err := cursor.Decode(&rekap)
+		if err != nil {
+			return nil, errors.New(err.Error())
+		}
 
-// 		rekaps = append(rekaps, rekap)
+		rekaps = append(rekaps, rekap)
 
-// 	}
-// 	return rekaps, nil
-// }
+	}
+	return rekaps, nil
+}
