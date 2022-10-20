@@ -7,5 +7,5 @@ import (
 )
 
 type RekapService interface {
-	Create(ctx context.Context, request web.RekapCreateRequest) web.RekapResponse
+	Create(ctx context.Context, request web.RekapCreateRequest) *web.RekapResponse
 }

@@ -17,7 +17,7 @@ func NewRekapService(RekapRepo repository.RekapRepository) RekapService {
 	return &RekapServiceImpl{}
 }
 
-func (service *RekapServiceImpl) Create(ctx context.Context, request web.RekapCreateRequest) web.RekapResponse {
+func (service *RekapServiceImpl) Create(ctx context.Context, request web.RekapCreateRequest) *web.RekapResponse {
 	rekap := domain.Rekap{
 		CsName:      request.CsName,
 		CusName:     request.CsName,
@@ -28,7 +28,7 @@ func (service *RekapServiceImpl) Create(ctx context.Context, request web.RekapCr
 
 	result, err := service.RekapRepo.CreateOne(ctx, rekap)
 	if err != nil {
-		panic(err)
+		return nil
 	}
 
 	return model.RekapResponse(*result)
