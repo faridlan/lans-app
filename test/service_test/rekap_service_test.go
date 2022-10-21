@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/faridlan/lans-app/app"
 	"github.com/faridlan/lans-app/model/domain"
 	"github.com/faridlan/lans-app/model/web"
 	"github.com/faridlan/lans-app/repository"
@@ -44,4 +45,29 @@ func TestCreate(t *testing.T) {
 			RekapDate:   time.Now().Unix(),
 		}, resutl)
 	})
+}
+
+func TestServiceInsert(t *testing.T) {
+
+	client := app.NewDatabase()
+	Collection := client.Database("lans_app").Collection("rekap")
+	repository := repository.NewRekapRepository(Collection)
+	service := service.NewRekapService(repository)
+
+	response := service.Create(context.Background(), web.RekapCreateRequest{
+		CsName:      "Farid",
+		CusName:     "Lan",
+		RekapStatus: true,
+		PrintStatus: true,
+		RekapDate:   time.Now().Unix(),
+	})
+
+	assert.Equal(t, web.RekapResponse{
+		Id:          response.Id,
+		CsName:      response.CsName,
+		CusName:     response.CusName,
+		RekapStatus: response.RekapStatus,
+		PrintStatus: response.PrintStatus,
+		RekapDate:   response.RekapDate,
+	}, response)
 }
