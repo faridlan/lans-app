@@ -5,8 +5,8 @@ import (
 	"github.com/faridlan/lans-app/model/web"
 )
 
-func RekapResponse(rekap domain.Rekap) *web.RekapResponse {
-	return &web.RekapResponse{
+func RekapResponse(rekap *domain.Rekap) web.RekapResponse {
+	return web.RekapResponse{
 		Id:          rekap.Id.Hex(),
 		CsName:      rekap.CsName,
 		CusName:     rekap.CusName,
@@ -14,5 +14,14 @@ func RekapResponse(rekap domain.Rekap) *web.RekapResponse {
 		PrintStatus: rekap.PrintStatus,
 		RekapDate:   rekap.RekapDate,
 	}
+}
 
+func RekapResponses(rekaps []domain.Rekap) []web.RekapResponse {
+
+	rekapResponses := []web.RekapResponse{}
+	for _, rekap := range rekaps {
+		rekapResponses = append(rekapResponses, RekapResponse(&rekap))
+	}
+
+	return rekapResponses
 }

@@ -27,7 +27,8 @@ func (repository *RekapRepositoryImpl) CreateOne(ctx context.Context, rekap doma
 		return nil, err
 	}
 
-	rekap.Id = result.InsertedID.(primitive.ObjectID)
+	id := result.InsertedID
+	rekap.Id = id.(primitive.ObjectID)
 
 	return &rekap, nil
 }

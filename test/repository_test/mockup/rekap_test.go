@@ -20,11 +20,9 @@ func TestInsertOne(t *testing.T) {
 	mt.Run("success", func(mt *mtest.T) {
 		rekapCollection := *mt.Coll
 		rekapRepository := repository.NewRekapRepository(&rekapCollection)
-		id := primitive.NewObjectID()
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
 
-		resutl, err := rekapRepository.CreateOne(context.Background(), domain.Rekap{
-			Id:          id,
+		result, err := rekapRepository.CreateOne(context.Background(), domain.Rekap{
 			CsName:      "Udin",
 			CusName:     "Jhon",
 			RekapStatus: true,
@@ -34,13 +32,13 @@ func TestInsertOne(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, &domain.Rekap{
-			Id:          id,
-			CsName:      "Udin",
-			CusName:     "Jhon",
-			RekapStatus: true,
-			PrintStatus: false,
-			RekapDate:   time.Now().Unix(),
-		}, resutl)
+			Id:          result.Id,
+			CsName:      result.CsName,
+			CusName:     result.CusName,
+			RekapStatus: result.RekapStatus,
+			PrintStatus: result.PrintStatus,
+			RekapDate:   result.RekapDate,
+		}, result)
 	})
 }
 
@@ -52,7 +50,7 @@ func TestUpdateOne(t *testing.T) {
 		rekapCollection := *mt.Coll
 		rekapRepository := repository.NewRekapRepository(&rekapCollection)
 		rekap := domain.Rekap{
-			Id:          primitive.NewObjectID(),
+			// Id:          primitive.NewObjectID(),
 			CsName:      "John",
 			CusName:     "Udin",
 			RekapStatus: true,

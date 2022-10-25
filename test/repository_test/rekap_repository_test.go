@@ -9,7 +9,6 @@ import (
 	"github.com/faridlan/lans-app/model/domain"
 	"github.com/faridlan/lans-app/repository"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestRekapInsert(t *testing.T) {
@@ -17,12 +16,12 @@ func TestRekapInsert(t *testing.T) {
 	client := app.NewDatabase()
 	Collection := client.Database("lans_app").Collection("rekap")
 	repository := repository.NewRekapRepository(Collection)
-	id := primitive.NewObjectID()
+	// id := primitive.NewObjectID()
 
 	rekap, err := repository.CreateOne(context.Background(), domain.Rekap{
-		Id:          id,
-		CsName:      "Joko",
-		CusName:     "Moro",
+		// Id:          id,
+		CsName:      "Gotou",
+		CusName:     "Satoro",
 		RekapStatus: true,
 		PrintStatus: true,
 		RekapDate:   time.Now().Unix(),
@@ -30,9 +29,9 @@ func TestRekapInsert(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, &domain.Rekap{
-		Id:          id,
-		CsName:      "Joko",
-		CusName:     "Moro",
+		Id:          rekap.Id,
+		CsName:      "Gotou",
+		CusName:     "Satoro",
 		RekapStatus: true,
 		PrintStatus: true,
 		RekapDate:   time.Now().Unix(),
