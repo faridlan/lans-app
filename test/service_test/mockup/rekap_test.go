@@ -9,6 +9,7 @@ import (
 	"github.com/faridlan/lans-app/repository"
 	"github.com/faridlan/lans-app/service"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 )
@@ -24,7 +25,7 @@ func TestCreate(t *testing.T) {
 		rs := service.NewRekapService(rekapRepository)
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
 
-		resutl := rs.Create(context.Background(), web.RekapCreateRequest{
+		result := rs.Create(context.Background(), web.RekapCreateRequest{
 			CsName:      "Udin",
 			CusName:     "Jhon",
 			RekapStatus: true,
@@ -33,13 +34,13 @@ func TestCreate(t *testing.T) {
 		})
 
 		assert.Equal(t, web.RekapResponse{
-			Id:          resutl.Id,
-			CsName:      "Udin",
-			CusName:     "Jhon",
-			RekapStatus: true,
-			PrintStatus: false,
-			RekapDate:   time.Now().Unix(),
-		}, resutl)
+			Id:          result.Id,
+			CsName:      result.CsName,
+			CusName:     result.CusName,
+			RekapStatus: result.RekapStatus,
+			PrintStatus: result.PrintStatus,
+			RekapDate:   result.RekapDate,
+		}, result)
 	})
 }
 
@@ -50,28 +51,68 @@ func TestUpdate(t *testing.T) {
 
 	mt.Run("success", func(mt *mtest.T) {
 		rekapCollection := *mt.Coll
-		rerkapRepository := repository.NewRekapRepository(&rekapCollection)
-		rekapService := service.NewRekapService(rerkapRepository)
+		rekapRepository := repository.NewRekapRepository(&rekapCollection)
+		rekapService := service.NewRekapService(rekapRepository)
+
 		id := primitive.NewObjectID()
 
-		rekap := web.RekapUpdateRequest{
+		rekapReq := web.RekapUpdateRequest{
 			Id:          id.Hex(),
 			CsName:      "Udin",
-			CusName:     "John",
+			CusName:     "Jhon",
 			RekapStatus: false,
 			PrintStatus: false,
 			RekapDate:   time.Now().Unix(),
 		}
 
-		response := rekapService.Update(context.Background(), rekap)
-		assert.Equal(t, web.RekapResponse{
-			Id:          response.Id,
-			CsName:      response.CsName,
-			CusName:     response.CusName,
-			RekapStatus: response.RekapStatus,
-			PrintStatus: response.PrintStatus,
-			RekapDate:   time.Now().Unix(),
-		}, response)
+		mt.AddMockResponses(bson.D{
+			{Key: "ok", Value: 1},
+			{Key: "value", Value: bson.D{
+				{Key: "_id", Value: rekapReq.Id},
+				{Key: "cs_name", Value: rekapReq.CsName},
+				{Key: "cus_name", Value: rekapReq.CusName},
+				{Key: "rekap_status", Value: rekapReq.RekapStatus},
+				{Key: "print_status", Value: rekapReq.PrintStatus},
+				{Key: "rekap_date", Value: rekapReq.RekapDate},
+			}},
+		})
+
+		result := rekapService.Update(context.Background(), rekapReq)
+		assert.NotEqual(t, rekapReq, result)
 	})
 
+}
+
+func TestFindById(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+	defer mt.Close()
+
+	mt.Run("success", func(mt *mtest.T) {
+		rekapCollection := *mt.Coll
+		rerkapRepository := repository.NewRekapRepository(&rekapCollection)
+		rekapService := service.NewRekapService(rerkapRepository)
+		id := primitive.NewObjectID()
+
+		// mt.AddMockResponses(mtest.CreateSuccessResponse())
+
+		expectedResponse := web.RekapResponse{
+			Id:          id.Hex(),
+			CsName:      "Udin",
+			CusName:     "farid",
+			RekapStatus: false,
+			PrintStatus: false,
+			RekapDate:   time.Now().Unix(),
+		}
+
+		mt.AddMockResponses(mtest.CreateCursorResponse(1, "foo.bar", mtest.FirstBatch, bson.D{
+			{Key: "_id", Value: expectedResponse.Id},
+			{Key: "cs_name", Value: expectedResponse.CsName},
+			{Key: "cus_name", Value: expectedResponse.CusName},
+			{Key: "rekap_status", Value: expectedResponse.RekapStatus},
+			{Key: "print_status", Value: expectedResponse.PrintStatus},
+			{Key: "rekap_date", Value: expectedResponse.RekapDate},
+		}))
+		response := rekapService.FindById(context.Background(), id.Hex())
+		assert.Equal(t, expectedResponse, response)
+	})
 }

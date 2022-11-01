@@ -50,7 +50,7 @@ func TestUpdateOne(t *testing.T) {
 		rekapCollection := *mt.Coll
 		rekapRepository := repository.NewRekapRepository(&rekapCollection)
 		rekap := domain.Rekap{
-			// Id:          primitive.NewObjectID(),
+			Id:          primitive.NewObjectID(),
 			CsName:      "John",
 			CusName:     "Udin",
 			RekapStatus: true,
