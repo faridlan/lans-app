@@ -28,6 +28,35 @@ func (controller *RekapControllerImpl) Create(writer http.ResponseWriter, reques
 	helper.WriteToResponseBody(writer, webResponse)
 }
 
+func (controller *RekapControllerImpl) Update(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	id := params.ByName("id")
+	rekapUpdateReq := web.RekapUpdateRequest{}
+	helper.ReadFromRequestBody(request, &rekapUpdateReq)
+
+	rekapUpdateReq.Id = id
+
+	rekapResponse := controller.RekapService.Update(request.Context(), rekapUpdateReq)
+	webResponse := web.WebResponse{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   rekapResponse,
+	}
+
+	helper.WriteToResponseBody(writer, webResponse)
+}
+
+func (controller *RekapControllerImpl) Delete(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	id := params.ByName("id")
+
+	controller.RekapService.Delete(request.Context(), id)
+	webResponse := web.WebResponse{
+		Code:   http.StatusOK,
+		Status: "OK",
+	}
+
+	helper.WriteToResponseBody(writer, webResponse)
+}
+
 func (controller *RekapControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("id")
 
@@ -40,4 +69,16 @@ func (controller *RekapControllerImpl) FindById(writer http.ResponseWriter, requ
 
 	helper.WriteToResponseBody(writer, webResponse)
 
+}
+
+func (controller *RekapControllerImpl) FindAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	rekapResponse := controller.RekapService.FindAll(request.Context())
+	webResponse := web.WebResponse{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   rekapResponse,
+	}
+
+	helper.WriteToResponseBody(writer, webResponse)
 }
